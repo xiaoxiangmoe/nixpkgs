@@ -45,7 +45,10 @@ rustPlatform.buildRustPackage rec {
     homepage = "https://github.com/prefix-dev/rattler-build";
     changelog = "https://github.com/prefix-dev/rattler-build/releases/tag/v${version}";
     license = lib.licenses.bsd3;
-    maintainers = with lib.maintainers; [ genga898 ];
+    maintainers = with lib.maintainers; [
+      genga898
+      xiaoxiangmoe
+    ];
     mainProgram = "rattler-build";
   };
 }
