@@ -26,7 +26,10 @@ buildGoModule {
     description = "Wait4X allows you to wait for a port or a service to enter the requested state";
     homepage = "https://github.com/wait4x/wait4x";
     license = licenses.asl20;
-    maintainers = with maintainers; [ jfvillablanca ];
+    maintainers = with maintainers; [
+      xiaoxiangmoe
+      jfvillablanca
+    ];
     mainProgram = "wait4x";
   };
 }
