@@ -3,17 +3,15 @@
   buildGoModule,
   fetchFromGitHub,
 }:
-let
+
+buildGoModule (finalAttrs: {
   pname = "wait4x";
   version = "3.3.1";
-in
-buildGoModule {
-  inherit pname version;
 
   src = fetchFromGitHub {
     owner = "wait4x";
-    repo = pname;
-    rev = "v${version}";
+    repo = "wait4x";
+    tag = "v${finalAttrs.version}";
     hash = "sha256-3s+ug4KqFv1P55eqNfAB2jbSPVzySxlHmkDMuuVlJcQ=";
   };
 
@@ -32,4 +30,4 @@ buildGoModule {
     ];
     mainProgram = "wait4x";
   };
-}
+})
