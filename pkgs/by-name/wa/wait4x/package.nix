@@ -2,6 +2,7 @@
   lib,
   buildGoModule,
   fetchFromGitHub,
+  versionCheckHook,
 }:
 
 buildGoModule (finalAttrs: {
@@ -19,6 +20,12 @@ buildGoModule (finalAttrs: {
 
   # Tests make network access
   doCheck = false;
+
+  nativeInstallCheckInputs = [
+    versionCheckHook
+  ];
+  versionCheckProgramArg = "version";
+  doInstallCheck = true;
 
   meta = with lib; {
     description = "Wait4X allows you to wait for a port or a service to enter the requested state";
