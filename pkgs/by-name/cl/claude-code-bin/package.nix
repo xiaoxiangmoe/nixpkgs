@@ -8,10 +8,14 @@
   makeBinaryWrapper,
   installShellFiles,
   writeScript,
+  # You can try use
+  # ```sh
+  # curl -fsSL "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/$(curl -fsSL 'https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/stable')/manifest.json" > manifest.json
+  # ```
+  # to get your own newer manifest.json file
   manifestFile ? ./manifest.json,
 }:
 let
-  inherit (stdenvNoCC.hostPlatform) system;
   gcsBucket = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases";
   manifest = lib.importJSON manifestFile;
   platforms = {
@@ -20,15 +24,15 @@ let
     x86_64-darwin = "darwin-x64";
     aarch64-darwin = "darwin-arm64";
   };
-  platform = platforms.${system};
+  platform = platforms.${stdenvNoCC.hostPlatform.system};
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
-  pname = "claude-code";
-  version = manifest.version or "unstable";
+  pname = "claude-code-bin";
+  version = manifest.version;
 
   src = fetchurl {
     url = "${gcsBucket}/${finalAttrs.version}/${platform}/claude";
-    hash = manifest.hashes.${platform} or lib.fakeHash;
+    sha256 = manifest.platforms.${platform}.checksum;
   };
 
   dontUnpack = true;
@@ -59,27 +63,15 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   ];
   versionCheckKeepEnvironment = [ "HOME" ];
   versionCheckProgramArg = "--version";
-  doInstallCheck = true;
+  doInstallCheck = !stdenvNoCC.isDarwin; # macOS: TypeError: failed to initialize Segmenter at /$bunfs/root/claude:591:41297
 
-  passthru.updateScript = writeScript "update-claude-code" ''
+  passthru.updateScript = writeScript "update-claude-code-bin" ''
     #!/usr/bin/env nix-shell
     #!nix-shell --pure -i bash -p curl cacert jq
 
     set -euo pipefail
 
-    # https://claude.ai/install.sh
-    version="$(curl -fsSL "${gcsBucket}/stable")"
-    output="$(
-      curl -fsSL "${gcsBucket}/$version/manifest.json" \
-      | jq '{
-        version: .version,
-        hashes: .platforms | with_entries(
-          select(.key | test("^(darwin|linux)-(x64|arm64)$"))
-          | .value = "sha256:\(.value.checksum)"
-        )
-      }'
-    )"
-    echo "$output" > "${toString manifestFile}"
+    curl -fsSL "${gcsBucket}/$(curl -fsSL '${gcsBucket}/stable')/manifest.json" > pkgs/by-name/cl/claude-code-bin/manifest.json
   '';
 
   meta = {
@@ -88,7 +80,10 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     downloadPage = "https://www.npmjs.com/package/@anthropic-ai/claude-code";
     changelog = "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md";
     license = lib.licenses.unfree;
-    maintainers = with lib.maintainers; [ mirkolenz ];
+    maintainers = with lib.maintainers; [
+      mirkolenz
+      xiaoxiangmoe
+    ];
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     mainProgram = "claude";
     platforms = lib.attrNames platforms;
